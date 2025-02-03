@@ -16,7 +16,7 @@ cleanup_empty_notes() {
         # Check if file only contains template content or is nearly empty
         local meaningful_content=$(grep -Ev '^(#daily|Tasks:|Scratchpad:|💻 Log:|Journal:|Vim Tip:|$|- \[ \] (Make bed|Vitamins \+ Moisturize|Leetcode))' "$note" | wc -l)
 
-        if  [[ $meaningful_content -gt 0 ]]; then
+        if  [[ $meaningful_content -eq 0 ]]; then
             echo "Removing empty note: $(basename "$note")"
             rm "$note"
         fi

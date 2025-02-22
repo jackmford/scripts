@@ -49,7 +49,7 @@ oauth = OAuth1(
 )
 
 # Data payload for x_auth mode
-payload = {"folder_id": "archive"}
+payload = {"folder_id": "archive", "limit": 500}
 response = requests.post(url, auth=oauth, data=payload)
 data = json.loads(response.text)
 

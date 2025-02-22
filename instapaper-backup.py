@@ -61,8 +61,7 @@ payload = {"folder_id": "archive", "limit": 500}
 response = requests.post(url, auth=oauth, data=payload)
 data = json.loads(response.text)
 
-for data, i in enumerate(data):
-    if 'title' in i and 'url' in i:
-        print(data, i['title'], i['url'])
-
+for index, item in enumerate(data):
+    if "title" in item and "url" in item:
+        print(index, item["title"], item["url"])
 

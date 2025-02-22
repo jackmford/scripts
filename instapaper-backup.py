@@ -11,6 +11,9 @@ CONSUMER_SECRET = os.environ["INSTAPAPER_SECRET"]
 USERNAME = os.environ["INSTAPAPER_USERNAME"]
 PASSWORD = os.environ["INSTAPAPER_PASSWORD"]
 
+if not all([CONSUMER_KEY, CONSUMER_SECRET, USERNAME, PASSWORD]):
+    raise ValueError("Missing required environment variables for Instapaper API authentication.")
+
 url = "https://www.instapaper.com/api/1/oauth/access_token"
 
 # OAuth1 automatically adds the required OAuth 1.0 parameters
@@ -26,16 +29,21 @@ payload = {
 }
 
 response = requests.post(url, auth=oauth, data=payload)
-
-if response.status_code == 200:
-    # The response comes as a URL-encoded string like:
-    # "oauth_token=xxx&oauth_token_secret=xxx"
+try:
+    response.raise_for_status()
     token_data = dict(pair.split("=") for pair in response.text.split("&"))
-    print("Access Token:", token_data.get("oauth_token"))
-    print("Token Secret:", token_data.get("oauth_token_secret"))
-else:
-    print("Error:", response.status_code)
-    print(response.text)
+except requests.exceptions.HTTPError as e:
+    print(f"HTTP Error: {e.response.status_code} - {e.response.text}")
+    exit(1)
+except Exception as e:
+    print(f"Error processing response: {e}")
+    exit(1)
+
+access_token = token_data.get("oauth_token")
+access_token_secret = token_data.get("oauth_token_secret")
+
+if not access_token or not access_token_secret:
+    print("Error: Failed to retrieve access token.")
     exit(1)
 
 url = "https://www.instapaper.com/api/1/bookmarks/list"

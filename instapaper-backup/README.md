@@ -1,6 +1,7 @@
 # Instapaper Backup
 
 TODO:
+- [ ] rewrite in Go
 - [ ] dump JSON into markdown
 - [ ] format it
 - [ ] put it into my obsidian vault

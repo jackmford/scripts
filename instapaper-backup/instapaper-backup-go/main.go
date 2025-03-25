@@ -35,6 +35,6 @@ func main() {
   bookmarks = get_bookmarks(access_token, access_token_secret)
 
   for _, bookmark := range bookmarks {
-    fmt.Println(bookmark.Title)
+    fmt.Printf("%d: %s %s", bookmark.Index, bookmark.Title, bookmark.Url)
   }
 }

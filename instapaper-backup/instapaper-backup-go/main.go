@@ -37,6 +37,4 @@ func main() {
   for _, bookmark := range bookmarks {
     fmt.Println(bookmark.Title)
   }
-
-  fmt.Println(CONSUMER_KEY)
 }

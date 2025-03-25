@@ -12,8 +12,8 @@ var PASSWORD string = os.Getenv("INSTAPAPER_PASSWORD")
 
 type Bookmark struct {
   Title string
-  url string
-  index int
+  Url string
+  Index int
 }
 
 func get_access_token () (string, string) {
@@ -21,7 +21,6 @@ func get_access_token () (string, string) {
 }
 
 func get_bookmarks(access_token string, access_token_secret string) []Bookmark {
-
   return nil
 }
 

@@ -74,7 +74,6 @@ func get_access_token() (string, string, error) {
 		return "", "", err
 	}
 
-  fmt.Println(values.Get("oauth_token"))
 	return values.Get("oauth_token"), values.Get("oauth_token_secret"), nil
 }
 

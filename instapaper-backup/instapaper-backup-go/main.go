@@ -13,11 +13,11 @@ import (
 )
 
 type Bookmark struct {
-	Title string
-	Url   string
-	Index int
+  Title string `json:"title"`
+  Url   string `json:"url"`
 }
 
+// Retrieve Oauth token.
 func get_access_token(consumer_key string, consumer_secret string, username string, password string) (string, string, error) {
 	endpoint := "https://www.instapaper.com/api/1/oauth/access_token"
 
@@ -35,20 +35,17 @@ func get_access_token(consumer_key string, consumer_secret string, username stri
 	token := oauth1.NewToken("", "") // No token initially
 	client := config.Client(oauth1.NoContext, token)
 
-	// Form data
 	data := url.Values{}
 	data.Set("x_auth_username", username)
 	data.Set("x_auth_password", password)
 	data.Set("x_auth_mode", "client_auth")
 
-	// Create request
 	req, err := http.NewRequest("POST", endpoint, strings.NewReader(data.Encode()))
 	if err != nil {
 		return "", "", err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// Execute request
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", "", err
@@ -64,7 +61,6 @@ func get_access_token(consumer_key string, consumer_secret string, username stri
 		return "", "", err
 	}
 
-	// Parse response
 	values, err := url.ParseQuery(string(body))
 	if err != nil {
 		return "", "", err
@@ -73,9 +69,10 @@ func get_access_token(consumer_key string, consumer_secret string, username stri
 	return values.Get("oauth_token"), values.Get("oauth_token_secret"), nil
 }
 
+// Gets the archive folder, up to 500 articles.
+// Currently checking with Instapaper how the limit works.
 func get_bookmarks(access_token string, access_token_secret string) ([]Bookmark, error) {
   endpoint := "https://www.instapaper.com/api/1/bookmarks/list"
-
   
   config := oauth1.NewConfig(os.Getenv("INSTAPAPER_KEY"), os.Getenv("INSTAPAPER_SECRET"))
 	token := oauth1.NewToken(access_token, access_token_secret)
@@ -134,7 +131,7 @@ func main() {
     os.Exit(1)
   }
 
-	for _, bookmark := range bookmarks {
-		fmt.Printf("%d: %s %s", bookmark.Index, bookmark.Title, bookmark.Url)
+	for index, bookmark := range bookmarks {
+		fmt.Printf("%d: %s %s\n", index, bookmark.Title, bookmark.Url)
 	}
 }

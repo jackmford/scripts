@@ -1,6 +1,7 @@
 package main
 
 import (
+  "encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -72,12 +73,42 @@ func get_access_token(consumer_key string, consumer_secret string, username stri
 	return values.Get("oauth_token"), values.Get("oauth_token_secret"), nil
 }
 
-func get_bookmarks(access_token string, access_token_secret string) []Bookmark {
-	return nil
+func get_bookmarks(access_token string, access_token_secret string) ([]Bookmark, error) {
+  endpoint := "https://www.instapaper.com/api/1/bookmarks/list"
+
+  
+  config := oauth1.NewConfig(os.Getenv("INSTAPAPER_KEY"), os.Getenv("INSTAPAPER_SECRET"))
+	token := oauth1.NewToken(access_token, access_token_secret)
+	client := config.Client(oauth1.NoContext, token)
+
+	params := url.Values{}
+	params.Set("folder_id", "archive")
+	params.Set("limit", "500")
+
+	req, err := http.NewRequest("GET", endpoint+"?"+params.Encode(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var bookmarks []Bookmark
+	if err := json.NewDecoder(resp.Body).Decode(&bookmarks); err != nil {
+		return nil, fmt.Errorf("unable to parse JSON response: %v", err)
+	}
+
+	return bookmarks, nil
 }
 
 func main() {
-	fmt.Println("Hi")
 	var consumer_key string = os.Getenv("INSTAPAPER_KEY")
 	var consumer_secret string = os.Getenv("INSTAPAPER_SECRET")
 	var username string = os.Getenv("INSTAPAPER_USERNAME")
@@ -97,7 +128,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	bookmarks = get_bookmarks(access_token, access_token_secret)
+	bookmarks, err = get_bookmarks(access_token, access_token_secret)
+  if err != nil {
+    fmt.Printf("Error retriving bookmarks %v\n", err)
+    os.Exit(1)
+  }
 
 	for _, bookmark := range bookmarks {
 		fmt.Printf("%d: %s %s", bookmark.Index, bookmark.Title, bookmark.Url)

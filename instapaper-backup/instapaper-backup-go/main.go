@@ -131,7 +131,10 @@ func main() {
     os.Exit(1)
   }
 
+  f, err := os.OpenFile("instapaper-backup.md", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	for index, bookmark := range bookmarks {
-		fmt.Printf("%d: %s %s\n", index, bookmark.Title, bookmark.Url)
+    if bookmark.Title != "" {
+		  fmt.Fprintf(f, "- %d [%s](%s)\n\n", index, bookmark.Title, bookmark.Url)
+    }
 	}
 }

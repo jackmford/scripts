@@ -114,6 +114,48 @@ func get_bookmarks(access_token string, access_token_secret string) ([]Bookmark,
 	return bookmarks, nil
 }
 
+func initializeLibrary(libraryFilePath string) LibraryData {
+	var library LibraryData
+	
+  // Check if file exists
+	if _, err := os.Stat(libraryFilePath); err == nil {
+		// File exists, read it
+		data, err := os.ReadFile(libraryFilePath)
+		if err != nil {
+			panic(err)
+		}
+		
+		if len(data) > 0 {
+			if err := json.Unmarshal(data, &library); err != nil {
+				// If error, try to initialize as empty
+				library = LibraryData{
+					Bookmarks: make(map[int]struct {
+						Url   string `json:"url"`
+						Title string `json:"title"`
+					}),
+				}
+			}
+		} else {
+			// Empty file, initialize library
+			library = LibraryData{
+				Bookmarks: make(map[int]struct {
+					Url   string `json:"url"`
+					Title string `json:"title"`
+				}),
+			}
+		}
+	} else {
+		// File doesn't exist, initialize library
+		library = LibraryData{
+			Bookmarks: make(map[int]struct {
+				Url   string `json:"url"`
+				Title string `json:"title"`
+			}),
+		}
+	}
+  return library
+}
+
 func main() {
 	var consumer_key string = os.Getenv("INSTAPAPER_KEY")
 	var consumer_secret string = os.Getenv("INSTAPAPER_SECRET")
@@ -143,45 +185,7 @@ func main() {
 
 	// Read existing library file or create a new one
 	libraryFilePath := "instapaper-library.json"
-	var library LibraryData
-	
-	// Check if file exists
-	if _, err := os.Stat(libraryFilePath); err == nil {
-		// File exists, read it
-		data, err := os.ReadFile(libraryFilePath)
-		if err != nil {
-			panic(err)
-		}
-		
-		// If file is empty, initialize with empty map
-		if len(data) > 0 {
-			if err := json.Unmarshal(data, &library); err != nil {
-				// If error, try to initialize as empty
-				library = LibraryData{
-					Bookmarks: make(map[int]struct {
-						Url   string `json:"url"`
-						Title string `json:"title"`
-					}),
-				}
-			}
-		} else {
-			// Empty file, initialize library
-			library = LibraryData{
-				Bookmarks: make(map[int]struct {
-					Url   string `json:"url"`
-					Title string `json:"title"`
-				}),
-			}
-		}
-	} else {
-		// File doesn't exist, initialize library
-		library = LibraryData{
-			Bookmarks: make(map[int]struct {
-				Url   string `json:"url"`
-				Title string `json:"title"`
-			}),
-		}
-	}
+  library := initializeLibrary(libraryFilePath)
 
 	// Open markdown file for appending
 	markdownFile, err := os.OpenFile("instapaper-backup.md", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)

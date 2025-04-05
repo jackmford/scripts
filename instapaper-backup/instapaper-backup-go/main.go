@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -17,6 +16,14 @@ type Bookmark struct {
   Title string `json:"title"`
   Url   string `json:"url"`
   BookmarkId int `json:"bookmark_id"`
+}
+
+// LibraryData represents the structure of our saved library
+type LibraryData struct {
+	Bookmarks map[int]struct {
+		Url   string `json:"url"`
+		Title string `json:"title"`
+	} `json:"bookmarks"`
 }
 
 // Retrieve Oauth token.
@@ -134,47 +141,87 @@ func main() {
     os.Exit(1)
   }
 
-  library, err := os.OpenFile("instapaper-library.json", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0755)
-  if err != nil {
-    panic(err)
-  }
-  defer library.Close()
-
-  markdownFile, err := os.OpenFile("instapaper-backup.md", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0755)
-  if err != nil {
-    panic(err)
-  }
-  defer markdownFile.Close()
-
-  libraryData, err := io.ReadAll(library)
-  if err != nil {
-    panic(err)
-  }
-
-  var savedBookmarks map[int]Bookmark
-  err = json.Unmarshal(libraryData, &savedBookmarks)
-
-	for _, bookmark := range bookmarks {
-    if _, exists := savedBookmarks[bookmark.BookmarkId]; !exists {
-      if bookmark.Title != "" {
-        libraryData := map[int]interface{}{
-          bookmark.BookmarkId: map[string]interface{}{
-            "url": bookmark.Url,
-            "title": bookmark.Title,
-          },
-        }
-        jsonLibraryData, err := json.MarshalIndent(libraryData, "", " ")
-        if err != nil {
-          panic(err)
-        }
-        _, err = library.Write(jsonLibraryData)
-        if err != nil {
-          panic(err)
-        }
-		    fmt.Fprintf(markdownFile, "- %d [%s](%s)\n\n", bookmark.BookmarkId, bookmark.Title, bookmark.Url)
-      }
-    }
+	// Read existing library file or create a new one
+	libraryFilePath := "instapaper-library.json"
+	var library LibraryData
+	
+	// Check if file exists
+	if _, err := os.Stat(libraryFilePath); err == nil {
+		// File exists, read it
+		data, err := os.ReadFile(libraryFilePath)
+		if err != nil {
+			panic(err)
+		}
+		
+		// If file is empty, initialize with empty map
+		if len(data) > 0 {
+			if err := json.Unmarshal(data, &library); err != nil {
+				// If error, try to initialize as empty
+				library = LibraryData{
+					Bookmarks: make(map[int]struct {
+						Url   string `json:"url"`
+						Title string `json:"title"`
+					}),
+				}
+			}
+		} else {
+			// Empty file, initialize library
+			library = LibraryData{
+				Bookmarks: make(map[int]struct {
+					Url   string `json:"url"`
+					Title string `json:"title"`
+				}),
+			}
+		}
+	} else {
+		// File doesn't exist, initialize library
+		library = LibraryData{
+			Bookmarks: make(map[int]struct {
+				Url   string `json:"url"`
+				Title string `json:"title"`
+			}),
+		}
 	}
 
+	// Open markdown file for appending
+	markdownFile, err := os.OpenFile("instapaper-backup.md", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer markdownFile.Close()
 
+	// Process new bookmarks
+	newBookmarksCount := 0
+	for _, bookmark := range bookmarks {
+		// Check if bookmark already exists in library
+		if _, exists := library.Bookmarks[bookmark.BookmarkId]; !exists {
+			if bookmark.Title != "" {
+				// Add to library
+				library.Bookmarks[bookmark.BookmarkId] = struct {
+					Url   string `json:"url"`
+					Title string `json:"title"`
+				}{
+					Url:   bookmark.Url,
+					Title: bookmark.Title,
+				}
+				
+				// Write to markdown file
+				fmt.Fprintf(markdownFile, "- %d [%s](%s)\n\n", bookmark.BookmarkId, bookmark.Title, bookmark.Url)
+				newBookmarksCount++
+			}
+		}
+	}
+
+	// Write updated library back to file
+	updatedLibraryData, err := json.MarshalIndent(library, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	
+	if err := os.WriteFile(libraryFilePath, updatedLibraryData, 0644); err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Added %d new bookmarks to library\n", newBookmarksCount)
+	fmt.Printf("Total bookmarks in library: %d\n", len(library.Bookmarks))
 }

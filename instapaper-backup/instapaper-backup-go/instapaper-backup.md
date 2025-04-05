@@ -1,3 +1,5 @@
+- 1765700789 [Every Friday](https://substack.com/home/post/p-160611860?source=queue)
+
 - 1760366005 [Tiny Teams Hall of Fame](https://tinyteams.xyz/)
 
 - 1760366875 [Home | Substack](https://substack.com/home/post/p-158045003)
@@ -271,4 +273,6 @@
 - 1708425476 [The Front Page: The Global War Against Free Speech](https://open.substack.com/pub/bariweiss/p/the-front-page-the-global-war-against?r=h787v&utm_medium=ios)
 
 - 1708424012 [Welcome to Instapaper!](http://blog.instapaper.com/private/96972159656/tumblr_nbl6hkJTN31qz8fxi)
+
+- 1765704817 [Every Friday](https://substack.com/home/post/p-160611860?source=queue)
 

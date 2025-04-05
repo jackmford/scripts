@@ -194,6 +194,8 @@ func main() {
 	}
 	defer markdownFile.Close()
 
+  // TODO: Move this functionality into a function
+
 	// Process new bookmarks
 	newBookmarksCount := 0
 	for _, bookmark := range bookmarks {

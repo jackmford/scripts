@@ -67,6 +67,7 @@ def main():
     access_token, access_token_secret = get_access_token()
     bookmarks = get_bookmarks(access_token, access_token_secret)
 
+    print(bookmarks)
     for index, item in enumerate(bookmarks):
         if "title" in item and "url" in item:
             print(index, item["title"], item["url"])

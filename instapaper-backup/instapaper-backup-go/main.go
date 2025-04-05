@@ -1,8 +1,9 @@
 package main
 
 import (
-  "encoding/json"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -15,6 +16,7 @@ import (
 type Bookmark struct {
   Title string `json:"title"`
   Url   string `json:"url"`
+  BookmarkId int `json:"bookmark_id"`
 }
 
 // Retrieve Oauth token.
@@ -125,16 +127,54 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	bookmarks, err = get_bookmarks(access_token, access_token_secret)
   if err != nil {
     fmt.Printf("Error retriving bookmarks %v\n", err)
     os.Exit(1)
   }
 
-  f, err := os.OpenFile("instapaper-backup.md", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	for index, bookmark := range bookmarks {
-    if bookmark.Title != "" {
-		  fmt.Fprintf(f, "- %d [%s](%s)\n\n", index, bookmark.Title, bookmark.Url)
+  library, err := os.OpenFile("instapaper-library.json", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0755)
+  if err != nil {
+    panic(err)
+  }
+  defer library.Close()
+
+  markdownFile, err := os.OpenFile("instapaper-backup.md", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0755)
+  if err != nil {
+    panic(err)
+  }
+  defer markdownFile.Close()
+
+  libraryData, err := io.ReadAll(library)
+  if err != nil {
+    panic(err)
+  }
+
+  var savedBookmarks map[int]Bookmark
+  err = json.Unmarshal(libraryData, &savedBookmarks)
+
+	for _, bookmark := range bookmarks {
+    if _, exists := savedBookmarks[bookmark.BookmarkId]; !exists {
+      if bookmark.Title != "" {
+        libraryData := map[int]interface{}{
+          bookmark.BookmarkId: map[string]interface{}{
+            "url": bookmark.Url,
+            "title": bookmark.Title,
+          },
+        }
+        jsonLibraryData, err := json.MarshalIndent(libraryData, "", " ")
+        if err != nil {
+          panic(err)
+        }
+        _, err = library.Write(jsonLibraryData)
+        if err != nil {
+          panic(err)
+        }
+		    fmt.Fprintf(markdownFile, "- %d [%s](%s)\n\n", bookmark.BookmarkId, bookmark.Title, bookmark.Url)
+      }
     }
 	}
+
+
 }
